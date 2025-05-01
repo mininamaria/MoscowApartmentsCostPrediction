@@ -1,0 +1,190 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+df <- read.csv("/srv/store/students2023/kvsizikova_1/3_year/project_2/moscow_flats_dataset_eng.csv", header=TRUE, stringsAsFactors=FALSE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+library(gridExtra)
+```
+Чистим данные
+
+```{r}
+colSums(is.na(df))
+```
+Мдааа, очень много прпущенных - мб попробовать не дропнуть значения, а заменить на среднее с такими же параметрами? Только вот там, где нет цены - их всё таки дропнуть.
+
+```{r}
+df  = df %>% drop_na(price)
+colSums(is.na(df))
+```
+Окей, остальное тоже почистилось немного - это хорошо
+
+```{r}
+# Replace NA with mean for specific columns
+df$min_to_metro[is.na(df$min_to_metro)] <- mean(df$min_to_metro, na.rm = TRUE)
+df$total_area[is.na(df$total_area)] <- mean(df$total_area, na.rm = TRUE)
+df$living_area[is.na(df$living_area)] <- mean(df$living_area, na.rm = TRUE)
+df$floor[is.na(df$floor)] <- round(mean(df$floor, na.rm = TRUE))
+df$number_of_floors[is.na(df$number_of_floors)] <- round(mean(df$number_of_floors, na.rm = TRUE))
+df$construction_year[is.na(df$construction_year)] <- round(mean(df$construction_year, na.rm = TRUE))
+df$is_new[is.na(df$is_new)] <- round(mean(df$is_new, na.rm = TRUE))
+df$is_apartments[is.na(df$is_apartments)] <- round(mean(df$is_apartments, na.rm = TRUE))
+df$ceiling_height[is.na(df$ceiling_height)] <- round(mean(df$ceiling_height, na.rm = TRUE), 2)
+
+# Add more columns as needed
+colSums(is.na(df))
+```
+let's round
+
+```{r}
+df$min_to_metro = round(df$min_to_metro)
+df$living_area = round(df$living_area, 2)
+```
+
+```{r}
+#df = df %>% distinct() %>% select(-link) %>% mutate(price = price/1000)
+```
+
+```{r}
+library(skimr)
+skim(df)
+
+```
+```{r}
+df = df %>% mutate(living_area_ratio = living_area / total_area) %>%
+  mutate(building_age = 2025 - construction_year) %>% 
+  mutate( floor_ratio = floor / number_of_floors)
+```
+EDA
+```{r}
+# Numerical columns
+numerical_cols <- c('price', 'min_to_metro', 'total_area', 'living_area', 'floor',  'number_of_floors', 'construction_year', 'ceiling_height', 'number_of_rooms', 'living_area_ratio', 'building_age', 'floor_ratio')
+
+# Categorical columns
+categorical_cols <- c('region_of_moscow', 'is_new', 'is_apartments')
+
+# Before outlier treatment visualizations
+
+# 1. Histograms for numerical variables (will appear one by one)
+for (col in numerical_cols) {
+  print(
+    ggplot(df, aes_string(x = col)) +
+      geom_histogram() +
+      ggtitle(paste('Distribution of', col, '(before cleaning)')) +
+      theme_minimal()
+  )
+}
+
+# 2. Boxplots for categorical variables (will appear one by one)
+for (col in categorical_cols) {
+  print(
+    ggplot(df, aes_string(x = col, y = 'price')) +
+      geom_boxplot(fill = "lightgreen") +
+      ggtitle(paste('Price vs.', col, '(before cleaning)')) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
+}
+
+# 3. Scatter plot
+print(
+  ggplot(df, aes(x = total_area, y = price)) +
+    geom_point(alpha = 0.5, color = "blue") +
+    ggtitle('Total Area vs. Price (before cleaning)') +
+    theme_minimal()
+)
+
+# 4. Correlation matrix
+cor_matrix <- df %>% 
+  select(all_of(numerical_cols)) %>% 
+  cor(use = "complete.obs")
+
+library(reshape2)
+melted_cor <- melt(cor_matrix)
+
+print(
+  ggplot(melted_cor, aes(x = Var1, y = Var2, fill = value)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+    geom_text(aes(label = round(value, 2)), color = "black", size = 3) +
+    ggtitle("Correlation Matrix (before cleaning)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+)
+```
+```{r}
+# Outlier treatment
+for (col in numerical_cols) {
+  Q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)
+  Q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 3.5 * IQR
+  upper_bound <- Q3 + 3.5 * IQR
+  
+  cat(paste("Number of outliers in", col, "before treatment:", 
+            sum(df[[col]] < lower_bound | df[[col]] > upper_bound, na.rm = TRUE), "\n"))
+  
+  df <- df %>% filter(.data[[col]] >= lower_bound & .data[[col]] <= upper_bound | is.na(.data[[col]]))
+  
+  cat(paste("Number of outliers in", col, "after treatment:", 
+            sum(df[[col]] < lower_bound | df[[col]] > upper_bound, na.rm = TRUE), "\n\n"))
+}
+
+
+```
+
+```{r}
+# After outlier treatment visualizations
+
+# 1. Histograms for numerical variables (cleaned)
+for (col in numerical_cols) {
+  print(
+    ggplot(df, aes_string(x = col)) +
+      geom_histogram() +
+      geom_density(color = "red") +
+      ggtitle(paste('Distribution of', col, '(after cleaning)')) +
+      theme_minimal()
+  )
+}
+
+# 2. Boxplots for categorical variables (cleaned)
+for (col in categorical_cols) {
+  print(
+    ggplot(df, aes_string(x = col, y = 'price')) +
+      geom_boxplot(fill = "lightgreen") +
+      ggtitle(paste('Price vs.', col, '(after cleaning)')) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
+}
+
+# 3. Scatter plot (cleaned)
+print(
+  ggplot(df, aes(x = total_area, y = price)) +
+    geom_point(alpha = 0.5, color = "blue") +
+    ggtitle('Total Area vs. Price (after cleaning)') +
+    theme_minimal()
+)
+
+# 4. Correlation matrix (cleaned)
+cor_matrix_clean <- df %>% 
+  select(all_of(numerical_cols)) %>% 
+  cor(use = "complete.obs")
+
+melted_cor_clean <- melt(cor_matrix_clean)
+
+print(
+  ggplot(melted_cor_clean, aes(x = Var1, y = Var2, fill = value)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+    geom_text(aes(label = round(value, 2)), color = "black", size = 3) +
+    ggtitle("Correlation Matrix (after cleaning)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+)
+```
+
