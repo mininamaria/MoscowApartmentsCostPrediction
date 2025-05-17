@@ -50,7 +50,11 @@ ui <- fluidPage(
         
         tags$div(style = "margin-bottom: 10px;",
                  actionButton("add_is_apartments", "Добавить: квартира")),
-        hidden(checkboxInput("is_apartments_buyer", "Квартира", value = FALSE))
+        hidden(checkboxInput("is_apartments_buyer", "Квартира", value = FALSE)),
+        
+        tags$div(style = "margin-bottom: 10px;",
+                 actionButton("add_is_new", "Добавить: новостройка")),
+        hidden(checkboxInput("is_new_buyer", "Новостройка", value = FALSE))
       ),
       
       # --- Форма продавца ---
@@ -72,7 +76,8 @@ ui <- fluidPage(
         numericInput("number_of_floors_seller", "Количество этажей в здании:", value = NULL, min = 1),
         numericInput("building_age_seller", "Возраст здания (лет):", value = NULL, min = 0),
         numericInput("min_to_metro_seller", "Минут до метро:", value = NULL, min = 1),
-        checkboxInput("is_apartments_seller", "Квартира", value = FALSE)
+        checkboxInput("is_apartments_seller", "Квартира", value = FALSE),
+        checkboxInput("is_new_seller", "Новостройка", value = FALSE)
       ),
       
       actionButton("predict_btn", "Рассчитать", class = "btn-primary")

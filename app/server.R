@@ -37,6 +37,10 @@ server <- function(input, output, session) {
     shinyjs::hide("add_is_apartments")
     shinyjs::show("is_apartments_buyer")
   })
+  observeEvent(input$add_is_new, {
+    shinyjs::hide("add_is_new")
+    shinyjs::show("is_new_buyer")
+  })
   
   # --- Enable/disable the predict button depending on input completeness ---
   observe({
@@ -120,15 +124,64 @@ server <- function(input, output, session) {
       )
     }
     
-    # Simulate model prediction delay
-    Sys.sleep(1.5)
-    
-    # Return prediction result
+    # Create a feature row based on user type
     if (input$user_type == "buyer") {
-      list(min = 10000000, max = 15000000)
+      # Create a data frame with buyer inputs
+      new_data <- data.frame(
+        min_to_metro = if (!is.null(input$min_to_metro_buyer)) mean(input$min_to_metro_buyer) else NA,
+        region_of_moscow = if (!is.null(input$region_of_moscow_buyer)) input$region_of_moscow_buyer else NA,
+        living_area = mean(input$living_area_buyer),
+        floor = if (!is.null(input$floor_buyer)) mean(input$floor_buyer) else NA,
+        number_of_floors = if (!is.null(input$number_of_floors_buyer)) mean(input$number_of_floors_buyer) else NA,
+        is_new = if (!is.null(input$is_new_buyer)) input$is_new_buyer else 0,
+        is_apartments = if (!is.null(input$is_apartments_buyer)) input$is_apartments_buyer else 0,
+        ceiling_height = if (!is.null(input$ceiling_height_buyer)) mean(input$ceiling_height_buyer) else NA,
+        number_of_rooms = input$number_of_rooms_buyer,
+        building_age = if (!is.null(input$building_age_buyer)) mean(input$building_age_buyer) else NA
+        
+      )
     } else {
-      list(min = 8500000, max = 12300000)
+      # Create a data frame with seller inputs
+      new_data <- data.frame(
+        min_to_metro = input$min_to_metro_seller,
+        region_of_moscow = input$region_of_moscow_seller,
+        living_area = input$living_area_seller,
+        floor = input$floor_seller,
+        number_of_floors = input$number_of_floors_seller,
+        is_new = input$is_new_seller,
+        is_apartments = input$is_apartments_seller,
+        ceiling_height = input$ceiling_height_seller,
+        number_of_rooms = input$number_of_rooms_seller,
+        building_age = input$building_age_seller
+ 
+        
+      )
     }
+    
+    # Apply preprocessor (e.g., imputation, encoding, scaling)
+    processed <- predict(preprocessor, new_data)
+    
+    # Ensure it's a data frame (some preprocessors like `dummyVars` may return a matrix)
+    processed <- as.data.frame(processed)
+    
+    # Align with model's expected features
+    required_names <- model$finalModel$feature_names
+    
+    # Add missing columns with 0s
+    missing <- setdiff(required_names, names(processed))
+    for (col in missing) processed[[col]] <- 0
+    
+    # Reorder columns to match model input
+    processed <- processed[, required_names, drop = FALSE]
+    
+    # Predict
+    preds <- predict(model, processed)
+    
+    # Return a confidence range (±10%)
+    pred_min <- floor(preds * 0.9)
+    pred_max <- ceiling(preds * 1.1)
+    
+    list(min = pred_min, max = pred_max)
   })
   
   # --- Trigger progress bar and result display ---
