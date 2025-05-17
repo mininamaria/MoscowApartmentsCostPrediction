@@ -16,7 +16,7 @@ ui <- fluidPage(
         condition = "input.user_type == 'buyer'",
         
         checkboxGroupInput("number_of_rooms_buyer", "Количество комнат:", choices = 1:7),
-        sliderInput("living_area_buyer", "Жилая площадь (м²):", min = 10, max = 200, value = c(30, 70)),
+        sliderInput("living_area_buyer", "Жилая площадь (м²):", min = 1, max = 120, value = c(30, 70)),
         
         tags$div(style = "margin-bottom: 10px;",
                  actionButton("add_region", "Добавить регион Москвы")),
@@ -29,20 +29,20 @@ ui <- fluidPage(
         ),
         
         tags$div(style = "margin-bottom: 10px;",
-                 actionButton("add_building_age", "Добавить возраст здания")),
-        hidden(sliderInput("building_age_buyer", "Возраст здания (лет):", min = 0, max = 100, value = c(0, 50))),
-        
-        tags$div(style = "margin-bottom: 10px;",
-                 actionButton("add_number_of_floors", "Добавить количество этажей")),
-        hidden(sliderInput("number_of_floors_buyer", "Количество этажей в здании:", min = 1, max = 50, value = c(1, 10))),
-        
-        tags$div(style = "margin-bottom: 10px;",
                  actionButton("add_ceiling_height", "Добавить высоту потолков")),
-        hidden(sliderInput("ceiling_height_buyer", "Высота потолков (м):", min = 2.0, max = 4.0, step = 0.1, value = c(2.5, 3.2))),
+        hidden(sliderInput("ceiling_height_buyer", "Высота потолков (м):", min = 2.0, max = 5.0, step = 0.1, value = c(2.5, 3.2))),
         
         tags$div(style = "margin-bottom: 10px;",
                  actionButton("add_floor", "Добавить этаж")),
-        hidden(textInput("floor_buyer", "Этаж (min-max):", placeholder = "например, 2-10")),
+        hidden(sliderInput("floor_buyer", "Этаж (min-max):", min = 1, max = 80, value = c(1, 10))),
+        
+        tags$div(style = "margin-bottom: 10px;",
+                 actionButton("add_number_of_floors", "Добавить количество этажей")),
+        hidden(sliderInput("number_of_floors_buyer", "Количество этажей в здании:", min = 1, max = 80, value = c(1, 10))),
+        
+        tags$div(style = "margin-bottom: 10px;",
+                 actionButton("add_building_age", "Добавить возраст здания")),
+        hidden(sliderInput("building_age_buyer", "Возраст здания (лет):", min = 0, max = 100, value = c(10, 30))),
         
         tags$div(style = "margin-bottom: 10px;",
                  actionButton("add_min_to_metro", "Добавить минут до метро")),
@@ -57,6 +57,9 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.user_type == 'seller'",
         
+        
+        numericInput("living_area_seller", "Жилая площадь (м²):", value = NULL, min = 1),
+        numericInput("number_of_rooms_seller", "Количество комнат:", value = NULL, min = 1),
         selectInput("region_of_moscow_seller", "Регион Москвы:",
                     choices = list(
                       "ЦАО" = "CAR", "САО" = "NAR", "СВАО" = "NEAR", "ВАО" = "EAR",
@@ -64,14 +67,11 @@ ui <- fluidPage(
                       "ЗАО" = "WAR", "СЗАО" = "NWAR"
                     ),
                     multiple = FALSE),
-        
-        numericInput("number_of_rooms_seller", "Количество комнат:", value = NULL, min = 1),
-        numericInput("living_area_seller", "Жилая площадь (м²):", value = NULL, min = 10),
-        numericInput("building_age_seller", "Возраст здания (лет):", value = NULL, min = 0),
-        numericInput("number_of_floors_seller", "Количество этажей в здании:", value = NULL, min = 1),
         numericInput("ceiling_height_seller", "Высота потолков (м):", value = NULL, step = 0.1, min = 2),
         numericInput("floor_seller", "Этаж:", value = NULL, min = 0),
-        numericInput("min_to_metro_seller", "Минут до метро:", value = NULL, min = 0),
+        numericInput("number_of_floors_seller", "Количество этажей в здании:", value = NULL, min = 1),
+        numericInput("building_age_seller", "Возраст здания (лет):", value = NULL, min = 0),
+        numericInput("min_to_metro_seller", "Минут до метро:", value = NULL, min = 1),
         checkboxInput("is_apartments_seller", "Квартира", value = FALSE)
       ),
       
