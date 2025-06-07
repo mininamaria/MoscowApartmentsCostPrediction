@@ -3,7 +3,7 @@ library(shinyjs)
 
 ui <- fluidPage(
   useShinyjs(),
-  titlePanel("Рассчёт стоимости жилья в Москве"),
+  titlePanel("Расчёт стоимости жилья в Москве"),
   
   sidebarLayout(
     sidebarPanel(
@@ -15,7 +15,8 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.user_type == 'buyer'",
         
-        checkboxGroupInput("number_of_rooms_buyer", "Количество комнат:", choices = 1:7),
+        sliderInput("number_of_rooms_buyer", "Количество комнат:", 
+                    min = 1, max = 7, value = 2, step = 1, ticks = TRUE),
         sliderInput("living_area_buyer", "Жилая площадь (м²):", min = 1, max = 120, value = c(30, 70)),
         
         tags$div(style = "margin-bottom: 10px;",
@@ -25,7 +26,7 @@ ui <- fluidPage(
                              "ЦАО" = "CAR", "САО" = "NAR", "СВАО" = "NEAR", 
                              "ВАО" = "EAR", "ЮВАО" = "SEAR", "ЮАО" = "SAR", 
                              "ЮЗАО" = "SWAR", "ЗАО" = "WAR", "СЗАО" = "NWAR"
-                           ), multiple = TRUE)
+                           ), multiple = FALSE)
         ),
         
         tags$div(style = "margin-bottom: 10px;",
@@ -97,8 +98,10 @@ ui <- fluidPage(
         condition = "output.show_result",
         tags$h3("Диапазон стоимости:"),
         verbatimTextOutput("price_range"),
-        tags$p("Тут будет пояснительный текст.")
-      )
+      ),
+      
+      tags$p("Поля расположены в порядке убывания значимости характеристики для формирования цены. Жилая площадь и количество комнат - самые важные."),
+      tags$p("Даже если Вы пользуетесь приложением в режиме покупателя, мы рекомендуем заполнить как можно больше полей, так как это сильно влияет на точность предсказания.")
     )
   )
 )

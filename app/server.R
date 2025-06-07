@@ -128,16 +128,16 @@ server <- function(input, output, session) {
     if (input$user_type == "buyer") {
       # Create a data frame with buyer inputs
       new_data <- data.frame(
-        min_to_metro = if (!is.null(input$min_to_metro_buyer)) mean(input$min_to_metro_buyer) else NA,
+        min_to_metro = if (!is.null(input$min_to_metro_buyer)) mean(input$min_to_metro_buyer) else 10.0,
         region_of_moscow = if (!is.null(input$region_of_moscow_buyer)) input$region_of_moscow_buyer else NA,
         living_area = mean(input$living_area_buyer),
-        floor = if (!is.null(input$floor_buyer)) mean(input$floor_buyer) else NA,
-        number_of_floors = if (!is.null(input$number_of_floors_buyer)) mean(input$number_of_floors_buyer) else NA,
+        floor = if (!is.null(input$floor_buyer)) mean(input$floor_buyer) else 7.0,
+        number_of_floors = if (!is.null(input$number_of_floors_buyer)) mean(input$number_of_floors_buyer) else 16.00,
         is_new = if (!is.null(input$is_new_buyer)) input$is_new_buyer else 0,
         is_apartments = if (!is.null(input$is_apartments_buyer)) input$is_apartments_buyer else 0,
-        ceiling_height = if (!is.null(input$ceiling_height_buyer)) mean(input$ceiling_height_buyer) else NA,
+        ceiling_height = if (!is.null(input$ceiling_height_buyer)) mean(input$ceiling_height_buyer) else 3.040,
         number_of_rooms = input$number_of_rooms_buyer,
-        building_age = if (!is.null(input$building_age_buyer)) mean(input$building_age_buyer) else NA
+        building_age = if (!is.null(input$building_age_buyer)) mean(input$building_age_buyer) else 10.00
         
       )
     } else {
@@ -157,6 +157,8 @@ server <- function(input, output, session) {
         
       )
     }
+    
+    
     
     # Apply preprocessor (e.g., imputation, encoding, scaling)
     processed <- predict(preprocessor, new_data)
